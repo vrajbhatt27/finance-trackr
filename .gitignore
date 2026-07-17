@@ -1,0 +1,8 @@
+.venv/
+.venv/**
+
+.ruff_cache/
+.ruff_cache/**
+
+data/
+data/**
