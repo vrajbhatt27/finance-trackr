@@ -1,17 +1,7 @@
-from pathlib import Path
+from fastapi import FastAPI
 
-try:
-    from services.transactions import process_transactions
-except ModuleNotFoundError:
-    from src.services.transactions import process_transactions
+from src.api import router
 
 
-def main():
-    pdf_path = Path(__file__).resolve().parent.parent / "data" / "file.pdf"
-    df = process_transactions(pdf_path)
-
-    print(df.to_string(index=False))
-
-
-if __name__ == "__main__":
-    main()
+app = FastAPI(title="Finance Trackr API")
+app.include_router(router)

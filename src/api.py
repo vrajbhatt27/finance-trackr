@@ -1,23 +1,20 @@
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
-try:
-    from services.transactions import process_transactions, transactions_to_records
-except ModuleNotFoundError:
-    from src.services.transactions import process_transactions, transactions_to_records
+from src.services.transactions import process_transactions, transactions_to_records
 
 
-app = FastAPI(title="Finance Trackr API")
+router = APIRouter()
 
 
-@app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "ok"}
 
 
-@app.post("/transactions/upload")
+@router.post("/transactions/upload")
 async def upload_transactions(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are supported")

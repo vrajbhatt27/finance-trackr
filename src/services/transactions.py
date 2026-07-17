@@ -1,18 +1,13 @@
-try:
-    from extractors.scotiabank import ScotiabankExtractor
-    from utils.categorize_desc import get_category
-    from utils.format_desc import clean_desc
-except ModuleNotFoundError:
-    from src.extractors.scotiabank import ScotiabankExtractor
-    from src.utils.categorize_desc import get_category
-    from src.utils.format_desc import clean_desc
+from src.extractors.scotiabank import ScotiabankExtractor
+from src.utils.categorize_desc import get_category
+from src.utils.format_desc import clean_desc
 
 
 def process_transactions(pdf_path):
     extractor = ScotiabankExtractor()
     df = extractor.extract(pdf_path)
     df["DETAILS"] = df["DETAILS"].apply(clean_desc)
-    df["categories"] = df["DETAILS"].apply(get_category)
+    df["category"] = df["DETAILS"].apply(get_category)
     return df
 
 
