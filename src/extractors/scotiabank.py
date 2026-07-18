@@ -1,10 +1,21 @@
-from .base import BaseExtractor
 from collections import defaultdict
+from pathlib import Path
+import re
+
+from PIL import Image
 import pdfplumber
 import pandas as pd
+import pytesseract
+
+from .base import BaseExtractor
 
 
 class ScotiabankExtractor(BaseExtractor):
+    IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"}
+    DATE_PATTERN = re.compile(r"^[A-Z]{3},\s+[A-Z]{3}\s+\d{2},\s+\d{4}$")
+    IMAGE_TRANSACTION_PATTERN = re.compile(
+        r"^(?P<desc>.*?)\s+(?P<amount>-?\$\d+(?:,\d{3})*\.\d{2})\s*>?$"
+    )
     COLUMN_RANGES = {
         "REF.#": (71, 103),
         "TRANS_DATE": (103, 132),
@@ -50,7 +61,52 @@ class ScotiabankExtractor(BaseExtractor):
 
         return df
 
-    def extract(self, pdf_path):
+    def clean_image_description(self, desc):
+        desc = re.sub(r"^[^\w$]+", "", desc).strip()
+        desc = re.sub(r"^\(?\d+\)?\s*", "", desc).strip()
+        desc = re.sub(r"\s+-?\s*\*+#?\d+\*\d+.*$", "", desc).strip()
+        return desc
+
+    def parse_image_amount(self, amount):
+        return float(amount.replace("$", "").replace(",", ""))
+
+    def extract_text_from_image(self, image_path):
+        with Image.open(image_path) as image:
+            return pytesseract.image_to_string(image).strip()
+
+    def extract_image(self, image_path):
+        records = []
+        current_date = None
+        text = self.extract_text_from_image(image_path)
+
+        for line in text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            if self.DATE_PATTERN.match(line):
+                current_date = line
+                continue
+
+            if current_date is None:
+                continue
+
+            match = self.IMAGE_TRANSACTION_PATTERN.match(line)
+            if not match:
+                continue
+
+            records.append(
+                {
+                    "REF": len(records) + 1,
+                    "TRANS_DATE": current_date,
+                    "DETAILS": self.clean_image_description(match.group("desc")),
+                    "AMOUNT": self.parse_image_amount(match.group("amount")),
+                }
+            )
+
+        return pd.DataFrame(records)
+
+    def extract_pdf(self, pdf_path):
         records = []
 
         with pdfplumber.open(pdf_path) as pdf:
@@ -105,3 +161,11 @@ class ScotiabankExtractor(BaseExtractor):
         df = self.clean(pd.DataFrame(records))
 
         return df
+
+    def extract(self, file_path):
+        suffix = Path(file_path).suffix.lower()
+        if suffix == ".pdf":
+            return self.extract_pdf(file_path)
+        if suffix in self.IMAGE_EXTENSIONS:
+            return self.extract_image(file_path)
+        raise ValueError(f"Unsupported file type: {suffix}")

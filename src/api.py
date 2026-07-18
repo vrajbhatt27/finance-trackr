@@ -7,6 +7,7 @@ from src.services.transactions import process_transactions, transactions_to_reco
 
 
 router = APIRouter()
+SUPPORTED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"}
 
 
 @router.get("/health")
@@ -16,10 +17,11 @@ def health():
 
 @router.post("/transactions/upload")
 async def upload_transactions(file: UploadFile = File(...)):
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Only PDF and image files are supported")
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
         temp_path = Path(temp_file.name)
         temp_file.write(await file.read())
 

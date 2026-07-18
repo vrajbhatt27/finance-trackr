@@ -3,9 +3,9 @@ from src.utils.categorize_desc import get_category
 from src.utils.format_desc import clean_desc
 
 
-def process_transactions(pdf_path):
+def process_transactions(file_path):
     extractor = ScotiabankExtractor()
-    df = extractor.extract(pdf_path)
+    df = extractor.extract(file_path)
     df["DETAILS"] = df["DETAILS"].apply(clean_desc)
     df["category"] = df["DETAILS"].apply(get_category)
     return df

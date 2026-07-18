@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 
-MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "desc_category_map.json"
+MAP_PATH = Path(__file__).resolve().parent.parent / "static" / "desc_category_map.json"
 
 
 def load_desc_category_map():
