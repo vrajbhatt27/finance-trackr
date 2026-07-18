@@ -7,5 +7,10 @@
 data/
 data/**
 
-.DS_Store
-.pycache
+.git/
+.git/**
+.gitignore
+
+*.DS_Store
+run_locally.py
+*.pdf
