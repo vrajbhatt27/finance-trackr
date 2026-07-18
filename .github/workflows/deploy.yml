@@ -24,6 +24,10 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v3
 
       - run: |
+          gcloud auth list
+          gcloud config list account
+
+      - run: |
           gcloud builds submit \
           --tag=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.ARTIFACT_REPOSITORY }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
 
